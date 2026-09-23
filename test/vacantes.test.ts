@@ -69,4 +69,12 @@ describe("ver_vacante", () => {
     const r2 = await t2.call("ver_vacante", { id: V });
     expect(r2.json.advertencias.join()).toMatch(/notas/);
   });
+
+  it("degrades stage names gracefully when pipeline catalog fails", async () => {
+    const t = await connect(new FakeHr({ ...routes, "/pipeline/": () => new UpstreamError("timeout") }));
+    const r = await t.call("ver_vacante", { id: V });
+    expect(r.json.vacante).toMatchObject({ id: V });
+    expect(r.json.pipeline.etapas).toEqual([{ etapa: "etapa 0", cantidad: 6 }, { etapa: "etapa 7", cantidad: 4 }]);
+    expect(r.json.advertencias.join()).toMatch(/catalogo de etapas/);
+  });
 });

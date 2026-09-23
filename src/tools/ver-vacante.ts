@@ -4,7 +4,7 @@ import { getPipelines, stageName, type Pipeline } from "../hr/catalog.js";
 import { firstArray } from "../hr/paginate.js";
 import { arr, num } from "../shape/common.js";
 import { vacancyDetail } from "../shape/vacancy.js";
-import { defineTool, enc, orNotFound, settle } from "./define.js";
+import { defineTool, enc, orNotFound, settle, unwrap } from "./define.js";
 
 function stageCounts(counts: any, pipelines: Pipeline[], pipelineId?: string) {
   const etapas = arr(counts?.pipeline?.stage).map((s: any) => {
@@ -26,7 +26,7 @@ export const verVacante = defineTool({
   async run({ id, incluir_estadisticas }, ctx) {
     const base = `/vacancies/${enc(id)}`;
     const body = await orNotFound(ctx.hr.get(base), "vacante", id);
-    const raw = body?.vacante ?? body?.vacancy ?? body;
+    const raw = unwrap(body, "vacante", "vacancy");
     const [pipelines, counts, notas, preguntas, requisitos] = await Promise.all([
       settle(getPipelines(ctx.hr, ctx.cache)),
       settle(ctx.hr.get(`${base}/pipeline/counts`)),
@@ -52,6 +52,7 @@ export const verVacante = defineTool({
     }
 
     if (!counts.ok) advertencias.push(`pipeline: ${counts.error}`);
+    if (!pipelines.ok) advertencias.push(`catalogo de etapas: ${pipelines.error}`);
     return {
       vacante: vacancyDetail(raw),
       pipeline: counts.ok ? stageCounts(counts.value, pipelines.ok ? pipelines.value : [], raw?.pipelineId) : undefined,
