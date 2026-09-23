@@ -39,6 +39,7 @@ Restart Claude Code and run `/mcp` to check that `hiringroom` is connected.
 ## Operations
 
 - Secrets: `~/.config/hiringroom-mcp/.env` (override with `HIRINGROOM_ENV_FILE`). Must be mode 600.
+- `leer_cv` returns the full CV text verbatim, which usually contains personal data such as DNI or date of birth; asking for a CV counts as the explicit request for that data.
 - Audit log: `~/.local/state/hiringroom-mcp/audit.jsonl` (override with `HR_MCP_AUDIT_DIR`). One line per call; emails and names are hashed.
 - Limits: see `src/config.ts` (`HR_MCP_*` env vars).
 - `npm test` — unit + tool tests (synthetic data). `npm run smoke` — manual read-only check against the real API; prints counts, timings and key names only.

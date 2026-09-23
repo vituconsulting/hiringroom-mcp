@@ -36,7 +36,8 @@ export async function fetchCvText(ctx: ToolContext, postulanteId: string, fileId
 export const leerCv = defineTool({
   name: "leer_cv",
   description:
-    "Descarga el CV adjunto de un postulante (PDF o DOCX) y devuelve su texto. Sin file_id toma el primer adjunto legible. Los file_id salen de ver_postulante.",
+    "Descarga el CV adjunto de un postulante (PDF o DOCX) y devuelve su texto. Sin file_id toma el primer adjunto legible. Los file_id salen de ver_postulante. " +
+    "El texto del CV se devuelve completo y puede incluir datos personales como DNI o fecha de nacimiento.",
   input: {
     postulante_id: z.string().min(1),
     file_id: z.string().optional(),
