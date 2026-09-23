@@ -10,7 +10,7 @@ const TEXT_SCAN_MAX = 1000;
 export const buscarVacantes = defineTool({
   name: "buscar_vacantes",
   description:
-    "Busca vacantes (búsquedas laborales) de la cuenta. Filtros: estado (ej. Activa, Cerrada), cliente o área, rango de fecha de creación (YYYY-MM-DD) y texto en el nombre. Devuelve un resumen por vacante; usá ver_vacante para el detalle y los contadores del pipeline.",
+    "Busca vacantes (búsquedas laborales) de la cuenta. Filtros: estado (ej. Activa, Cerrada, Cubierta), cliente o área, rango de fecha de creación (YYYY-MM-DD) y texto en el nombre. Devuelve un resumen por vacante; usá ver_vacante para el detalle y los contadores del pipeline.",
   input: {
     estado: z.array(z.string()).optional().describe("estados, ej. [\"Activa\"]"),
     cliente_o_area_id: z.string().optional(),
@@ -23,7 +23,9 @@ export const buscarVacantes = defineTool({
   async run(a, ctx) {
     if (a.creada_desde && a.creada_hasta) assertRange(a.creada_desde, a.creada_hasta);
     const query = {
-      listStatus: a.estado?.join(","),
+      // HiringRoom's listStatus only accepts lowercase values (probe 2026-09-23: "Activa" is
+      // rejected, "activa" is not); accept any case from the caller and normalize it here.
+      listStatus: a.estado?.map((s) => s.toLowerCase()).join(","),
       areaOrCustomerId: a.cliente_o_area_id,
       createdFrom: a.creada_desde ? epochStart(a.creada_desde) : undefined,
       createdTo: a.creada_hasta ? epochEnd(a.creada_hasta) : undefined,

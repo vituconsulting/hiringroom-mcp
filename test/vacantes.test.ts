@@ -10,10 +10,17 @@ describe("buscar_vacantes", () => {
     const hr = new FakeHr({ "/vacancies": { total: 25, totalPaginas: 2, page: 0, pageSize: 20, vacantes: [vacancyRaw()] } });
     const t = await connect(hr);
     const r = await t.call("buscar_vacantes", { estado: ["Activa"], creada_desde: "2026-08-01", creada_hasta: "2026-08-31" });
-    expect(hr.calls[0].query).toMatchObject({ listStatus: "Activa", createdFrom: 1785553200, createdTo: 1788231599, page: 0, pageSize: 20 });
+    expect(hr.calls[0].query).toMatchObject({ listStatus: "activa", createdFrom: 1785553200, createdTo: 1788231599, page: 0, pageSize: 20 });
     expect(r.json).toMatchObject({ total: 25, pagina: 1, hay_mas: true });
     expect(r.json.items[0]).toMatchObject({ id: V, estado: "Activa", cliente: "Operadora Sur" });
     expect(r.json.items[0].descripcion).toBeUndefined();
+  });
+
+  it("lowercases and comma-joins multiple statuses (HiringRoom rejects mixed case)", async () => {
+    const hr = new FakeHr({ "/vacancies": { total: 0, totalPaginas: 1, vacantes: [] } });
+    const t = await connect(hr);
+    await t.call("buscar_vacantes", { estado: ["Activa", "Cerrada"] });
+    expect(hr.calls[0].query.listStatus).toBe("activa,cerrada");
   });
 
   it("filters by name text across pages", async () => {

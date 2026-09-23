@@ -40,9 +40,15 @@ export function countBy<T>(items: T[], key: (x: T) => string): { clave: string; 
   return [...m.entries()].map(([clave, cantidad]) => ({ clave, cantidad })).sort((a, b) => b.cantidad - a.cantidad);
 }
 
-/** Field name for the hire date is not documented; check the smoke output (Task 15) and keep this list in sync. */
+/**
+ * `fechaIngreso` is the real hire-date key on `/postulants/hired/` items (probe 2026-09-23):
+ * across three consecutive HiringRoom-filtered windows, 27/27 items fell inside the requested
+ * `start`/`end` range on `fechaIngreso` vs 25/27 on the sibling field `fechaAccionIngreso`
+ * (the date the "hired" status change was recorded), confirming `fechaIngreso` is what the API
+ * filters on.
+ */
 function hireDate(raw: any): string | undefined {
-  return normalizeHrDate(raw?.fechaContratacion ?? raw?.fechaContratado ?? raw?.fechaIngreso ?? raw?.fechaHire);
+  return normalizeHrDate(raw?.fechaIngreso);
 }
 
 export const reporteContrataciones = defineTool({

@@ -11,6 +11,7 @@ describe("common", () => {
 
   it("extracts labels, names, places and yes/no", () => {
     expect(label({ nombre: "X" })).toBe("X");
+    expect(label({ compañia: "Operadora Sur", descripcion: "Empresa de servicios petroleros." })).toBe("Operadora Sur");
     expect(label("  ")).toBeUndefined();
     expect(personName({ nombre: "Ana", apellido: "Paz" })).toBe("Ana Paz");
     expect(place({ ciudad: "Añelo", provincia: "Neuquén", pais: "Argentina" })).toBe("Añelo, Neuquén, Argentina");

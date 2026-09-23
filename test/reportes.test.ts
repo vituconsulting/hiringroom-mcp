@@ -8,8 +8,8 @@ describe("reporte_contrataciones", () => {
     const hr = new FakeHr({
       "/postulants/hired/": (q: Record<string, unknown>) =>
         q.start === "01-07-2026"
-          ? { total: 2, totalPaginas: 1, curriculums: [postulantRaw({ id: "h1", fechaContratacion: "05-07-2026" }), postulantRaw({ id: "h2", vacanteId: "v9", vacanteNombre: "Chofer", fechaContratacion: "20-07-2026" })] }
-          : { total: 1, totalPaginas: 1, curriculums: [postulantRaw({ id: "h3", fechaContratacion: "02-08-2026" })] },
+          ? { total: 2, totalPaginas: 1, curriculums: [postulantRaw({ id: "h1", fechaIngreso: "05-07-2026" }), postulantRaw({ id: "h2", vacanteId: "v9", vacanteNombre: "Chofer", fechaIngreso: "20-07-2026" })] }
+          : { total: 1, totalPaginas: 1, curriculums: [postulantRaw({ id: "h3", fechaIngreso: "02-08-2026" })] },
     });
     const t = await connect(hr);
     const r = await t.call("reporte_contrataciones", { desde: "2026-07-01", hasta: "2026-08-15" });

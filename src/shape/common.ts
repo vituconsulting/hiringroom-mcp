@@ -26,7 +26,9 @@ export function label(v: unknown): string | undefined {
   if (typeof v === "number") return String(v);
   if (v && typeof v === "object") {
     const o = v as Record<string, unknown>;
-    return label(o.nombre ?? o.name ?? o.descripcion ?? o.razonSocial);
+    // `compañia` is the real HiringRoom key for a client's name (probe 2026-09-23); it must
+    // outrank `descripcion`, which on a client object is free text, not an identifying label.
+    return label(o.nombre ?? o.name ?? o.compañia ?? o.descripcion ?? o.razonSocial);
   }
   return undefined;
 }

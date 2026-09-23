@@ -28,7 +28,7 @@ export function vacancyRaw(o: Record<string, unknown> = {}) {
     publicada: "Si",
     pipelineId: "p2",
     usuarios: [{ id: "u1", nombre: "Ana", apellido: "Paz" }, { id: "u2", nombre: "Leo", apellido: "Sur" }],
-    client: { id: "c1", nombre: "Operadora Sur" },
+    client: { id: "c1", compañia: "Operadora Sur", descripcion: "Empresa de servicios petroleros." },
     micrositios: [],
     ...o,
   };
