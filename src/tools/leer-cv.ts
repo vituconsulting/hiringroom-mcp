@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { detectKind, extractText, truncate } from "../cv/extract.js";
-import { InputError } from "../errors.js";
+import { InputError, NotFoundError } from "../errors.js";
 import { firstArray } from "../hr/paginate.js";
 import type { ToolContext } from "./context.js";
 import { defineTool, enc, orNotFound } from "./define.js";
@@ -18,11 +18,19 @@ export async function fetchCvText(ctx: ToolContext, postulanteId: string, fileId
   if (!candidates.length) throw new InputError("el postulante no tiene archivos adjuntos");
 
   for (const fid of candidates.slice(0, MAX_ATTEMPTS)) {
-    const bin = await orNotFound(ctx.hr.getBinary(`${base}/file/${enc(fid)}`, ctx.limits.cvMaxBytes), "archivo", fid);
-    if (detectKind(bin.bytes) === "otro" && !fileId) continue;
-    return { fileId: fid, text: await extractText(bin.bytes) };
+    try {
+      const bin = await orNotFound(ctx.hr.getBinary(`${base}/file/${enc(fid)}`, ctx.limits.cvMaxBytes), "archivo", fid);
+      if (detectKind(bin.bytes) === "otro" && !fileId) continue;
+      const text = await extractText(bin.bytes);
+      if (!text && !fileId) continue;
+      if (!text && fileId) throw new InputError("el archivo no tiene texto extraíble (posible PDF escaneado)");
+      return { fileId: fid, text };
+    } catch (err) {
+      if (!fileId && (err instanceof NotFoundError || err instanceof InputError)) continue;
+      throw err;
+    }
   }
-  throw new InputError("ningún adjunto es PDF o DOCX");
+  throw new InputError("ningún adjunto es un PDF o DOCX legible");
 }
 
 export const leerCv = defineTool({
