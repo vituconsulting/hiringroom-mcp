@@ -53,6 +53,19 @@ describe("reporte_movimientos_vacantes", () => {
     const r = await (await connect(new FakeHr({}))).call("reporte_movimientos_vacantes", { desde: "2026-01-01", hasta: "2026-09-01" });
     expect(r.text).toMatch(/90 días/);
   });
+
+  it("dedupes a vacancy that changed status in two windows, keeping the last occurrence", async () => {
+    const hr = new FakeHr({
+      "/vacancies/byChangedStatus": (q: Record<string, unknown>) =>
+        q.start === "01-09-2026"
+          ? { total: 1, totalPaginas: 1, vacantes: [vacancyRaw({ id: "a", estadoActual: "Entrevista" })] }
+          : { total: 1, totalPaginas: 1, vacantes: [vacancyRaw({ id: "a", estadoActual: "Cerrada" })] },
+    });
+    const r = await (await connect(hr)).call("reporte_movimientos_vacantes", { desde: "2026-09-01", hasta: "2026-09-10" });
+    expect(r.json.total).toBe(1);
+    expect(r.json.items).toHaveLength(1);
+    expect(r.json.por_estado).toEqual([{ estado: "Cerrada", cantidad: 1 }]);
+  });
 });
 
 describe("postulaciones_por_dia", () => {

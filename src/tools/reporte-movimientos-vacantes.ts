@@ -3,6 +3,13 @@ import { vacancySummary } from "../shape/vacancy.js";
 import { defineTool, isoDate } from "./define.js";
 import { countBy, fetchWindows } from "./reporte-contrataciones.js";
 
+/** A vacancy that changes status in more than one window is reported once, per its last occurrence. */
+function dedupeById(items: any[]): any[] {
+  const byId = new Map<string, any>();
+  for (const item of items) byId.set(String(item?.id), item);
+  return [...byId.values()];
+}
+
 export const reporteMovimientosVacantes = defineTool({
   name: "reporte_movimientos_vacantes",
   description:
@@ -14,7 +21,7 @@ export const reporteMovimientosVacantes = defineTool({
       start: toDmy(w.desde),
       end: toDmy(w.hasta),
     }));
-    const items = res.items.map(vacancySummary);
+    const items = dedupeById(res.items).map(vacancySummary);
     return {
       total: items.length,
       completo: res.completo,
