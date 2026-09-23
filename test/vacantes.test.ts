@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { UpstreamError } from "../src/errors.js";
+import { HrValidationError, UpstreamError } from "../src/errors.js";
 import { pipelinesRaw, vacancyRaw } from "./fixtures.js";
 import { connect, FakeHr } from "./helpers/harness.js";
 
@@ -63,6 +63,20 @@ describe("ver_vacante", () => {
     const t = await connect(new FakeHr({ ...routes, [`/vacancies/${V}/stats`]: () => new UpstreamError("timeout") }));
     const r = await t.call("ver_vacante", { id: V, incluir_estadisticas: true });
     expect(r.json.estadisticas).toBe("no disponible (timeout)");
+  });
+
+  it("degrades gracefully (not the whole tool) when stats returns 422/404 and warns why", async () => {
+    const t = await connect(new FakeHr({ ...routes, [`/vacancies/${V}/stats`]: () => new HrValidationError(["stats no soportadas"]) }));
+    const r = await t.call("ver_vacante", { id: V, incluir_estadisticas: true });
+    expect(r.isError).toBe(false);
+    expect(r.json.estadisticas).toBe("no disponible");
+    expect(r.json.advertencias.join()).toMatch(/estadisticas.*stats no soportadas/);
+  });
+
+  it("returns a successful stats payload as-is", async () => {
+    const t = await connect(new FakeHr({ ...routes, [`/vacancies/${V}/stats`]: { vistas: 120, postulaciones: 15 } }));
+    const r = await t.call("ver_vacante", { id: V, incluir_estadisticas: true });
+    expect(r.json.estadisticas).toEqual({ vistas: 120, postulaciones: 15 });
   });
 
   it("reports missing vacancies clearly and keeps partial sections", async () => {

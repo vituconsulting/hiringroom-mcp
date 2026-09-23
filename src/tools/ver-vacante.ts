@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { UpstreamError } from "../errors.js";
+import { AuthError, UpstreamError } from "../errors.js";
 import { getPipelines, stageName, type Pipeline } from "../hr/catalog.js";
 import { firstArray } from "../hr/paginate.js";
 import { arr, num } from "../shape/common.js";
 import { vacancyDetail } from "../shape/vacancy.js";
-import { defineTool, enc, orNotFound, settle, unwrap } from "./define.js";
+import { defineTool, enc, errorMessage, orNotFound, settle, unwrap } from "./define.js";
 
 function stageCounts(counts: any, pipelines: Pipeline[], pipelineId?: string) {
   const etapas = arr(counts?.pipeline?.stage).map((s: any) => {
@@ -46,8 +46,13 @@ export const verVacante = defineTool({
       try {
         estadisticas = await ctx.hr.get(`${base}/stats`, {}, { timeoutMs: ctx.limits.statsBudgetMs, retries: 0 });
       } catch (err) {
-        if (!(err instanceof UpstreamError)) throw err;
-        estadisticas = "no disponible (timeout)";
+        if (err instanceof AuthError) throw err;
+        if (err instanceof UpstreamError) {
+          estadisticas = "no disponible (timeout)";
+        } else {
+          estadisticas = "no disponible";
+          advertencias.push(`estadisticas: ${errorMessage(err)}`);
+        }
       }
     }
 
