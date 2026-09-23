@@ -41,6 +41,17 @@ export const DEFAULT_LIMITS: Limits = {
   cacheTtlMs: 3_600_000,
 };
 
+/** These represent counts/byte sizes, not time budgets, and must be whole numbers. */
+const INTEGER_LIMITS = new Set<keyof Limits>([
+  "concurrency",
+  "perfilMaxScan",
+  "perfilCvTop",
+  "cvMaxBytes",
+  "cvDefaultChars",
+  "cvMaxChars",
+  "responseMaxBytes",
+]);
+
 const LIMIT_ENV: Record<keyof Limits, string> = {
   concurrency: "HR_MCP_CONCURRENCY",
   requestTimeoutMs: "HR_MCP_REQUEST_TIMEOUT_MS",
@@ -103,6 +114,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     if (raw === undefined) continue;
     const n = Number(raw);
     if (!Number.isFinite(n) || n <= 0) throw new ConfigError(`${LIMIT_ENV[key]} debe ser un número positivo`);
+    if (INTEGER_LIMITS.has(key) && !Number.isInteger(n)) throw new ConfigError(`${LIMIT_ENV[key]} debe ser un número entero`);
     limits[key] = n;
   }
 

@@ -55,4 +55,19 @@ describe("loadConfig", () => {
     expect(loadConfig({ HIRINGROOM_ENV_FILE: file, HR_MCP_CONCURRENCY: "2" }).limits.concurrency).toBe(2);
     expect(() => loadConfig({ HIRINGROOM_ENV_FILE: file, HR_MCP_CONCURRENCY: "x" })).toThrow(/HR_MCP_CONCURRENCY/);
   });
+
+  it("rejects non-integer values for count limits, naming the env var", () => {
+    const file = envFile(GOOD);
+    for (const [envVar, value] of [
+      ["HR_MCP_CONCURRENCY", "2.5"],
+      ["HR_MCP_PERFIL_MAX_SCAN", "10.1"],
+      ["HR_MCP_PERFIL_CV_TOP", "3.5"],
+      ["HR_MCP_CV_MAX_BYTES", "1000.5"],
+      ["HR_MCP_CV_DEFAULT_CHARS", "100.9"],
+      ["HR_MCP_CV_MAX_CHARS", "200.2"],
+      ["HR_MCP_RESPONSE_MAX_BYTES", "5000.5"],
+    ]) {
+      expect(() => loadConfig({ HIRINGROOM_ENV_FILE: file, [envVar]: value })).toThrow(new RegExp(envVar));
+    }
+  });
 });
