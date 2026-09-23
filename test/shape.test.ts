@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compact, label, personName, place, siNo, trimToSize, jsonBytes } from "../src/shape/common.js";
+import { compact, label, personName, place, siNo, stripKeys, trimToSize, jsonBytes } from "../src/shape/common.js";
 import { aniosExperiencia, postulantProfile, postulantSummary } from "../src/shape/postulant.js";
 import { vacancyDetail, vacancySummary } from "../src/shape/vacancy.js";
 import { NOW, postulantRaw, vacancyRaw } from "./fixtures.js";
@@ -18,6 +18,12 @@ describe("common", () => {
     expect(siNo("Sí")).toBe(true);
     expect(siNo("No")).toBe(false);
     expect(siNo(undefined)).toBeUndefined();
+  });
+
+  it("stripKeys removes keys recursively through objects and arrays without mutating the input", () => {
+    const input = { a: 1, b: { c: 2, d: [{ e: 3, c: 4 }, { c: 5, f: 6 }] } };
+    expect(stripKeys(input, ["c"])).toEqual({ a: 1, b: { d: [{ e: 3 }, { f: 6 }] } });
+    expect(input).toEqual({ a: 1, b: { c: 2, d: [{ e: 3, c: 4 }, { c: 5, f: 6 }] } });
   });
 
   it("trims the longest list until the payload fits", () => {
@@ -91,5 +97,18 @@ describe("postulant", () => {
     expect(on).toContain("01-01-1990");
     expect(on).not.toContain("Masculino");
     expect(on).not.toContain("foto.jpg");
+  });
+
+  it("strips sensitive/never keys at any depth, not just top level", () => {
+    const raw = postulantRaw({
+      legajo: { dni: "40000000", fechaNacimiento: "02-02-1991", genero: "Femenino", fotoPerfil: "https://example.com/foto2.jpg" },
+    });
+    const off = JSON.stringify(postulantProfile(raw, NOW, false));
+    for (const s of ["40000000", "02-02-1991", "Femenino", "foto2.jpg"]) expect(off).not.toContain(s);
+    const on = JSON.stringify(postulantProfile(raw, NOW, true));
+    expect(on).toContain("40000000");
+    expect(on).toContain("02-02-1991");
+    expect(on).not.toContain("Femenino");
+    expect(on).not.toContain("foto2.jpg");
   });
 });

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { firstArray } from "../hr/paginate.js";
-import { label } from "../shape/common.js";
-import { postulantProfile } from "../shape/postulant.js";
+import { label, stripKeys } from "../shape/common.js";
+import { NEVER_KEYS, postulantProfile, SENSITIVE_KEYS } from "../shape/postulant.js";
 import { defineTool, enc, orNotFound, settle, unwrap } from "./define.js";
 
 export const verPostulante = defineTool({
@@ -19,9 +19,10 @@ export const verPostulante = defineTool({
     const advertencias: string[] = [];
     if (!records.ok) advertencias.push(`registros: ${records.error}`);
     if (!files.ok) advertencias.push(`archivos: ${files.error}`);
+    const stripRecordKeys = incluir_sensibles ? NEVER_KEYS : [...NEVER_KEYS, ...SENSITIVE_KEYS];
     return {
       postulante: postulantProfile(raw, ctx.now(), incluir_sensibles),
-      registros: records.ok ? (records.value?.records ?? firstArray(records.value)) : undefined,
+      registros: records.ok ? stripKeys(records.value?.records ?? firstArray(records.value), stripRecordKeys) : undefined,
       archivos: files.ok
         ? (files.value?.archivos ?? firstArray(files.value)).map((f: any) => ({ file_id: label(f?.fileId), descripcion: label(f?.description) }))
         : undefined,

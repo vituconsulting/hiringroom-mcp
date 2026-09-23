@@ -13,6 +13,22 @@ export function compact<T>(v: T): T {
   return v;
 }
 
+/** Recursively removes `keys` from `value` at any depth (objects and arrays), returning a new value; `value` is left untouched. */
+export function stripKeys<T>(value: T, keys: string[]): T {
+  if (Array.isArray(value)) {
+    return value.map((v) => stripKeys(v, keys)) as unknown as T;
+  }
+  if (value && typeof value === "object" && !(value instanceof Date)) {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (keys.includes(k)) continue;
+      out[k] = stripKeys(v, keys);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 function isEmpty(v: unknown): boolean {
   if (v === null || v === undefined) return true;
   if (typeof v === "string") return v.trim() === "";

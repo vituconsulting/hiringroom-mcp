@@ -38,4 +38,14 @@ describe("registerTool", () => {
     expect(r.json.recortado).toBe(true);
     expect(r.text.length).toBeLessThanOrEqual(5000);
   });
+
+  it("strips genero and fotoPerfil recursively from any tool result, as a last line of defence", async () => {
+    const t = await connect(
+      new FakeHr({ "/account/areas": [{ id: 1, nombre: "Producción", meta: { genero: "Femenino", fotoPerfil: "https://x/foto.jpg", nombre: "ok" } }] }),
+    );
+    const r = await t.call("catalogos", { tipo: "areas" });
+    expect(r.text).not.toContain("Femenino");
+    expect(r.text).not.toContain("foto.jpg");
+    expect(r.json.items[0].meta).toEqual({ nombre: "ok" });
+  });
 });

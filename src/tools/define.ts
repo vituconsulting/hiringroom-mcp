@@ -4,7 +4,7 @@ import type { Audit } from "../audit.js";
 import type { Limits } from "../config.js";
 import { AuthError, HrValidationError, InputError, NotFoundError, UpstreamError } from "../errors.js";
 import { logError } from "../log.js";
-import { compact, trimToSize } from "../shape/common.js";
+import { compact, stripKeys, trimToSize } from "../shape/common.js";
 import type { ToolContext, ToolResult } from "./context.js";
 
 export interface ToolDef<S extends ZodRawShape = ZodRawShape> {
@@ -54,6 +54,9 @@ export async function settle<T>(p: Promise<T>): Promise<{ ok: true; value: T } |
   }
 }
 
+/** Last line of defence: never let these leak in any tool result, regardless of where in the payload they sit. */
+const NEVER_LEAK_KEYS = ["genero", "fotoPerfil"];
+
 /** HiringRoom sometimes wraps a single object ({ postulant: {...} }). */
 export function unwrap(body: any, ...keys: string[]): any {
   for (const k of keys) if (body && typeof body === "object" && body[k] && typeof body[k] === "object") return body[k];
@@ -65,7 +68,7 @@ export function registerTool(server: McpServer, ctx: ToolContext, audit: Audit, 
     const started = Date.now();
     try {
       const maxBytes = def.maxBytes ? def.maxBytes(ctx.limits) : ctx.limits.responseMaxBytes;
-      const result = trimToSize(compact(await def.run(args, ctx)), maxBytes);
+      const result = trimToSize(compact(stripKeys(await def.run(args, ctx), NEVER_LEAK_KEYS)), maxBytes);
       audit.log({
         tool: def.name,
         params: args,

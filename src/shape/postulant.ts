@@ -1,5 +1,5 @@
 import { normalizeHrDate } from "../hr/dates.js";
-import { arr, compact, label, num, place, siNo } from "./common.js";
+import { arr, compact, label, num, place, siNo, stripKeys } from "./common.js";
 
 export interface PostulantSummary {
   id: string;
@@ -16,8 +16,10 @@ export interface PostulantSummary {
   tags?: string[];
 }
 
-const NEVER = ["genero", "fotoPerfil"];
-const SENSITIVE = ["dni", "cuil", "fechaNacimiento"];
+/** Fields never returned, at any depth, regardless of `incluir_sensibles`. */
+export const NEVER_KEYS = ["genero", "fotoPerfil"];
+/** Fields returned only when `incluir_sensibles` is true, at any depth. */
+export const SENSITIVE_KEYS = ["dni", "cuil", "fechaNacimiento"];
 
 function monthIndex(year: unknown, month: unknown): number | undefined {
   const y = num(year);
@@ -106,9 +108,8 @@ export function postulantSummary(raw: any, now: Date): PostulantSummary {
 }
 
 export function postulantProfile(raw: any, now: Date, incluirSensibles: boolean): Record<string, unknown> {
-  const out: Record<string, unknown> = { ...raw };
-  for (const k of NEVER) delete out[k];
-  if (!incluirSensibles) for (const k of SENSITIVE) delete out[k];
+  const keys = incluirSensibles ? NEVER_KEYS : [...NEVER_KEYS, ...SENSITIVE_KEYS];
+  const out = stripKeys(raw, keys) as Record<string, unknown>;
   return compact({
     nombre_completo: fullName(raw),
     anios_experiencia: aniosExperiencia(raw.experienciasLaborales, now),

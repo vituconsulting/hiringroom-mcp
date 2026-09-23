@@ -28,9 +28,10 @@ describe("buscar_postulantes", () => {
 });
 
 describe("ver_postulante", () => {
+  const legajo = { dni: "40000000", fechaNacimiento: "02-02-1991", genero: "Femenino", fotoPerfil: "https://example.com/foto2.jpg" };
   const routes = {
-    [`/postulants/${P}`]: { postulant: { ...postulantRaw(), comentarios: [{ texto: "Buen perfil" }], conocimientos: [{ nombre: "TIG" }] } },
-    [`/postulants/${P}/records`]: { records: [{ idVacante: "v1", descripcion: "Pasó a Entrevista", fechaCreacion: "21-09-2026", horaCreacion: "10:00" }] },
+    [`/postulants/${P}`]: { postulant: { ...postulantRaw(), legajo, comentarios: [{ texto: "Buen perfil" }], conocimientos: [{ nombre: "TIG" }] } },
+    [`/postulants/${P}/records`]: { records: [{ idVacante: "v1", descripcion: "Pasó a Entrevista", fechaCreacion: "21-09-2026", horaCreacion: "10:00", dni: "40000000" }] },
     [`/postulants/${P}/files`]: { result: "success", archivos: [{ fileId: "f1.pdf", description: "no especificado" }] },
   };
 
@@ -39,16 +40,23 @@ describe("ver_postulante", () => {
     const r = await t.call("ver_postulante", { id: P });
     expect(r.json.postulante).toMatchObject({ nombre_completo: "Juan Pérez", telefonoCelular: "+5429911111", comentarios: [{ texto: "Buen perfil" }] });
     expect(r.json.registros[0]).toMatchObject({ descripcion: "Pasó a Entrevista" });
+    expect(r.json.registros[0].dni).toBeUndefined();
     expect(r.json.archivos).toEqual([{ file_id: "f1.pdf", descripcion: "no especificado" }]);
     expect(r.text).not.toContain("30000000");
+    expect(r.text).not.toContain("40000000");
     expect(r.text).not.toContain("Masculino");
+    expect(r.text).not.toContain("Femenino");
+    expect(r.text).not.toContain("foto2.jpg");
   });
 
   it("includes dni and birth date only when asked", async () => {
     const t = await connect(new FakeHr(routes));
     const r = await t.call("ver_postulante", { id: P, incluir_sensibles: true });
-    expect(r.json.postulante).toMatchObject({ dni: "30000000", fechaNacimiento: "01-01-1990" });
+    expect(r.json.postulante).toMatchObject({ dni: "30000000", fechaNacimiento: "01-01-1990", legajo: { dni: "40000000", fechaNacimiento: "02-02-1991" } });
+    expect(r.json.registros[0]).toMatchObject({ dni: "40000000" });
     expect(r.text).not.toContain("Masculino");
+    expect(r.text).not.toContain("Femenino");
+    expect(r.text).not.toContain("foto2.jpg");
   });
 
   it("reports missing postulants", async () => {
