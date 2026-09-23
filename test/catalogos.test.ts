@@ -25,4 +25,27 @@ describe("catalogos", () => {
     const r = await t.call("catalogos", { tipo: "otra" });
     expect(r.isError).toBe(true);
   });
+
+  it("does not turn an empty array payload into a phantom item", async () => {
+    const t = await connect(new FakeHr({ "/account/areas": [] }));
+    const r = await t.call("catalogos", { tipo: "areas" });
+    expect(r.isError).toBe(false);
+    expect(r.json.total).toBe(0);
+    expect(r.json.items ?? []).toEqual([]);
+  });
+
+  it("does not turn an empty list-key payload into a phantom item", async () => {
+    const t = await connect(new FakeHr({ "/account/customers": { clientes: [] } }));
+    const r = await t.call("catalogos", { tipo: "clientes" });
+    expect(r.isError).toBe(false);
+    expect(r.json.total).toBe(0);
+    expect(r.json.items ?? []).toEqual([]);
+  });
+
+  it("still wraps a plain object payload with no array as a single item", async () => {
+    const t = await connect(new FakeHr({ "/account/areas": { id: 1, nombre: "X" } }));
+    const r = await t.call("catalogos", { tipo: "areas" });
+    expect(r.isError).toBe(false);
+    expect(r.json).toEqual({ tipo: "areas", total: 1, items: [{ id: 1, nombre: "X" }] });
+  });
 });

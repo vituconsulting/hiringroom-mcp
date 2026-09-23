@@ -22,8 +22,8 @@ export const catalogos = defineTool({
     }
     const path = SOURCES[tipo];
     const raw = await ctx.cache.get(`catalogo:${tipo}`, () => ctx.hr.get(path));
-    const list = firstArray(raw);
-    const items = list.length || !raw || typeof raw !== "object" ? list : [raw];
+    const hasList = Array.isArray(raw) || (!!raw && typeof raw === "object" && Object.values(raw).some(Array.isArray));
+    const items = hasList ? firstArray(raw) : raw && typeof raw === "object" ? [raw] : [];
     return { tipo, total: items.length, items };
   },
 });
