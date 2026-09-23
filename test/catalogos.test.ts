@@ -49,3 +49,21 @@ describe("catalogos", () => {
     expect(r.json).toEqual({ tipo: "areas", total: 1, items: [{ id: 1, nombre: "X" }] });
   });
 });
+
+describe("server", () => {
+  it("exposes exactly the 10 MVP tools", async () => {
+    const t = await connect(new FakeHr({}));
+    expect(await t.listTools()).toEqual([
+      "buscar_por_perfil",
+      "buscar_postulantes",
+      "buscar_vacantes",
+      "catalogos",
+      "leer_cv",
+      "postulaciones_por_dia",
+      "reporte_contrataciones",
+      "reporte_movimientos_vacantes",
+      "ver_postulante",
+      "ver_vacante",
+    ]);
+  });
+});
