@@ -55,7 +55,19 @@ async function pdfText(bytes: Buffer): Promise<string> {
 
 export async function extractText(bytes: Buffer): Promise<string> {
   const kind = detectKind(bytes);
-  if (kind === "pdf") return cleanText(await pdfText(bytes));
-  if (kind === "docx") return cleanText((await mammoth.extractRawText({ buffer: bytes })).value);
+  if (kind === "pdf") {
+    try {
+      return cleanText(await pdfText(bytes));
+    } catch (err) {
+      throw new InputError("no se pudo leer el archivo (dañado, protegido o formato no soportado)");
+    }
+  }
+  if (kind === "docx") {
+    try {
+      return cleanText((await mammoth.extractRawText({ buffer: bytes })).value);
+    } catch (err) {
+      throw new InputError("no se pudo leer el archivo (dañado, protegido o formato no soportado)");
+    }
+  }
   throw new InputError("formato de archivo no soportado (solo PDF o DOCX)");
 }
