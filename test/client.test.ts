@@ -69,6 +69,23 @@ describe("HrClient", () => {
     expect(String(err.message)).not.toContain("hunter2");
   });
 
+  it("maps 400/401/403 login responses to AuthError", async () => {
+    for (const status of [400, 401, 403]) {
+      const f = fake([], [json({ message: "rejected" }, status)]);
+      await expect(client(f.fetch).c.get("/x")).rejects.toBeInstanceOf(AuthError);
+    }
+  });
+
+  it("maps a 5xx login response to UpstreamError", async () => {
+    const f = fake([], [json({ message: "down" }, 503)]);
+    await expect(client(f.fetch).c.get("/x")).rejects.toBeInstanceOf(UpstreamError);
+  });
+
+  it("maps a non-JSON 200 login response to UpstreamError", async () => {
+    const f = fake([], [new Response("<html>not json</html>", { status: 200 })]);
+    await expect(client(f.fetch).c.get("/x")).rejects.toBeInstanceOf(UpstreamError);
+  });
+
   it("retries 5xx and network errors with backoff", async () => {
     const f = fake([json({}, 503), new TypeError("fetch failed"), json({ ok: 1 })]);
     const { c, sleeps } = client(f.fetch);

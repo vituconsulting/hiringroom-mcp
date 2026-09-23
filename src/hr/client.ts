@@ -128,8 +128,14 @@ export class HrClient implements HrLike {
     } catch {
       throw new UpstreamError("sin respuesta de HiringRoom al hacer login");
     }
+    if (res.status >= 500) throw new UpstreamError("HiringRoom no responde al hacer login");
     if (!res.ok) throw new AuthError(`login rechazado por HiringRoom (HTTP ${res.status})`);
-    const body = (await res.json()) as { token?: string; expiresIn?: number };
+    let body: { token?: string; expiresIn?: number };
+    try {
+      body = (await res.json()) as { token?: string; expiresIn?: number };
+    } catch {
+      throw new UpstreamError("respuesta no JSON de HiringRoom al hacer login");
+    }
     if (!body.token) throw new AuthError("login de HiringRoom sin token");
     this.token = body.token;
     this.expiresAt = this.now() + (body.expiresIn ?? 3600) * 1000;
