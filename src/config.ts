@@ -93,7 +93,7 @@ export function parseEnvFile(text: string): Record<string, string> {
   return out;
 }
 
-export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+export function loadConfig(env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform): Config {
   const file = defaultEnvFile(env);
   let mode: number;
   try {
@@ -101,7 +101,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   } catch {
     throw new ConfigError(`no se encontró el archivo de secretos: ${file}`);
   }
-  if ((mode & 0o077) !== 0) {
+  // Windows has no POSIX modes (stat reports 0o666/0o444); the user profile's NTFS ACLs protect the file there.
+  if (platform !== "win32" && (mode & 0o077) !== 0) {
     throw new ConfigError(`permisos inseguros en ${file}: debe ser 600 (chmod 600 ${file})`);
   }
   const vars = parseEnvFile(readFileSync(file, "utf8"));

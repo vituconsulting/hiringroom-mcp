@@ -36,6 +36,11 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ HIRINGROOM_ENV_FILE: envFile(GOOD, 0o644) })).toThrow(/600/);
   });
 
+  it("skips the permission check on Windows, where POSIX modes don't exist", () => {
+    const cfg = loadConfig({ HIRINGROOM_ENV_FILE: envFile(GOOD, 0o644) }, "win32");
+    expect(cfg.hr.clientId).toBe("cid");
+  });
+
   it("names missing keys without leaking values", () => {
     const file = envFile("HR_CLIENT_ID=cid\nHR_CLIENT_SECRET=s3cr3t\n");
     let err: unknown;
