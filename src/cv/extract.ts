@@ -16,7 +16,7 @@ export async function assertPdftotext(): Promise<void> {
     await run("pdftotext", ["-v"]);
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new ConfigError("falta pdftotext en el PATH (macOS: brew install poppler)");
+      throw new ConfigError("falta pdftotext en el PATH (macOS: brew install poppler; Windows: scoop install poppler)");
     }
     // pdftotext -v exits non-zero on some builds; being found is enough.
   }
